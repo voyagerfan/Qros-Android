@@ -30,11 +30,15 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -45,12 +49,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
+import androidx.navigation.compose.rememberNavController
 import com.dev.qros.QrosViewModel
 import com.dev.qros.model.Form
+import com.dev.qros.model.Pages
 import com.dev.qros.model.QrCodeData
+import com.dev.qros.model.QrCodeSubGraph
 import com.dev.qros.model.QrosUiState
 import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
@@ -65,119 +77,115 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
     val vCardDataState by viewModel.vCardDataState.collectAsStateWithLifecycle()
     var showAddNewQrContent by rememberSaveable { mutableStateOf(false) }
 
+    val navController = rememberNavController()
+    val startDestination = Pages.QR_CODE_GRAPH
+    var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
+
     val scope = rememberCoroutineScope()
 
     QrosMainScreen(
-        topBar = { QrosTopBar() },
-        bottomBar = { QrosBottomBar()},
+        qrosUiState = qrosUiState,
+        bottomBar = {
+            NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
+                Pages.entries.forEachIndexed { index, page ->
+                    NavigationBarItem(
+                        selected = selectedDestination == index,
+                        onClick = {
+                            navController.navigate(route = page.route){
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                            selectedDestination = index
+                        },
+                        icon = {
+                            Icon(
+                                painter = painterResource(page.icon),
+                                contentDescription = page.contentDescription
+                            )
+                        }
+                    )
+                }
+            }
+        },
         floatingActionBtn = {
             if(!showAddNewQrContent) {
                 AddQrCodeFloatingAction {
                     showAddNewQrContent = !showAddNewQrContent
+                    navController.navigate(QrCodeSubGraph.PROMPT_SCREEN.name)
                 }
             }
         },
-        onSuccessContent = { qrCodeData, padding ->
-            if(showAddNewQrContent) {
-                PromptScreen(
-                    vCardDataState = vCardDataState,
-                    onUpdateVCard = { vCard -> viewModel.updateVCardData(vCard)},
-                    scaffoldPadding = padding,
-                    onSave = { urlData ->
-                        scope.launch { viewModel.addNewUrl(urlData) }
-                        showAddNewQrContent = false
-                    },
-                    onCancel = { showAddNewQrContent = it }
-                )
-            } else {
-                RenderQrCodes(
-                    qrCodeDataList = qrCodeData,
-                    scaffoldPadding = padding
-                )
+        scaffoldInnerContent = { innerPadding, qrosUiState ->
+            NavHost(
+                modifier = Modifier.padding(innerPadding),
+                navController = navController,
+                startDestination = Pages.QR_CODE_GRAPH.route
+            ) {
+                navigation(startDestination = QrCodeSubGraph.HOME.name, route = Pages.QR_CODE_GRAPH.route) {
+                    composable(QrCodeSubGraph.HOME.name) {
+                        LaunchedEffect(qrosUiState) {
+                            if (qrosUiState is QrosUiState.Empty) {
+                                navController.navigate(QrCodeSubGraph.PROMPT_SCREEN.name)
+                            }
+                        }
+
+                        InnerContentContainer(
+                            padding = innerPadding,
+                            qrosUiState = qrosUiState,
+                            errorScreen = { throwable -> ErrorScreen(throwable) },
+                            successScreen = { data -> RenderQrCodes(data) },
+                            loadingScreen = { CustomLoadingIndicator() },
+                        )
+                    }
+                    composable(QrCodeSubGraph.PROMPT_SCREEN.name) {
+                        PromptScreen(
+                            vCardDataState = vCardDataState,
+                            onUpdateVCard = { vCard -> viewModel.updateVCardData(vCard)},
+                            scaffoldPadding = innerPadding,
+                            onSave = { urlData ->
+                                scope.launch { viewModel.addNewUrl(urlData) }
+                                navController.navigate(QrCodeSubGraph.PROMPT_SCREEN.name)
+                            },
+                            onCancel = {
+                                navController.navigate(QrCodeSubGraph.HOME.name)
+                                showAddNewQrContent = !showAddNewQrContent
+                            }
+                        )
+                    }
+                }
             }
         },
-        onLoadingContent = { padding -> CustomLoadingIndicator(scaffoldPadding = padding) },
-        onErrorContent = { throwable, padding ->
-            ErrorScreen(padding, throwable)
-        },
-        onEmptyContent = { padding ->
-            PromptScreen(
-                vCardDataState = vCardDataState,
-                onUpdateVCard = { vCard -> viewModel.updateVCardData(vCard) },
-                scaffoldPadding = padding,
-                onSave = { urlData ->
-                    scope.launch { viewModel.addNewUrl(urlData) }
-                },
-                onCancel = { showAddNewQrContent = it }
-            )
-        },
-        qrosUiState = qrosUiState
     )
 }
 
 @Composable
 internal fun QrosMainScreen(
-    topBar: @Composable () -> Unit,
     bottomBar: @Composable () -> Unit,
     floatingActionBtn: @Composable () -> Unit,
-    onSuccessContent: @Composable (List<QrCodeData>, PaddingValues) -> Unit,
-    onLoadingContent: @Composable (PaddingValues) -> Unit,
-    onErrorContent: @Composable (Throwable, PaddingValues) -> Unit,
-    onEmptyContent: @Composable (PaddingValues) -> Unit,
-    qrosUiState: QrosUiState<List<QrCodeData>>
+    qrosUiState: QrosUiState<List<QrCodeData>>,
+    scaffoldInnerContent: @Composable (PaddingValues, QrosUiState<List<QrCodeData>>) -> Unit
 ) {
     Scaffold(
-        topBar = topBar,
         bottomBar = bottomBar,
         floatingActionButton = floatingActionBtn,
         floatingActionButtonPosition =  FabPosition.End,
     ) { innerPadding ->
-
-        when(qrosUiState) {
-            is QrosUiState.Loading -> {
-                onLoadingContent(innerPadding)
-            }
-            is QrosUiState.Success -> {
-                onSuccessContent(qrosUiState.data, innerPadding)
-            }
-            is QrosUiState.Empty -> {
-                onEmptyContent(innerPadding)
-            }
-            is QrosUiState.Error -> {
-                onErrorContent(qrosUiState.error, innerPadding)
-            }
-        }
-    }
-}
-
-@Composable
-fun QrosTopBar() {
-    NavigationBar {}
-}
-
-@Composable
-fun QrosBottomBar(
-) {
-    NavigationBar {
-        Button(
-            onClick = { }
-        ) {
-            Text("Delete QR Code")
-        }
+        scaffoldInnerContent(innerPadding, qrosUiState)
     }
 }
 
 @Composable
 fun RenderQrCodes(
     qrCodeDataList: List<QrCodeData>,
-    scaffoldPadding: PaddingValues,
 ) {
     val pagerState = rememberPagerState(pageCount = {
         qrCodeDataList.size
     })
     VerticalPager(
         state = pagerState,
-        contentPadding = scaffoldPadding,
         modifier = Modifier
             .fillMaxSize()
     ) { page ->
@@ -205,12 +213,9 @@ fun RenderQrCodes(
 }
 
 @Composable
-fun CustomLoadingIndicator(
-    scaffoldPadding: PaddingValues
-) {
+fun CustomLoadingIndicator() {
     Column(
         modifier = Modifier
-            .padding(scaffoldPadding)
             .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -219,6 +224,35 @@ fun CustomLoadingIndicator(
             modifier = Modifier
                 .width(100.dp)
         )
+    }
+}
+
+@Composable
+fun <T> InnerContentContainer(
+    qrosUiState: QrosUiState<T>,
+    errorScreen: @Composable (Throwable) -> Unit,
+    successScreen: @Composable (T) -> Unit,
+    loadingScreen: @Composable () -> Unit,
+    padding: PaddingValues
+
+){
+    Box(modifier = Modifier
+        .padding(padding)
+    ) {
+        when(qrosUiState) {
+            is QrosUiState.Error -> {
+                errorScreen(qrosUiState.error)
+            }
+            is QrosUiState.Loading -> {
+                loadingScreen()
+            }
+            is QrosUiState.Success -> {
+                successScreen(qrosUiState.data)
+            }
+            is QrosUiState.Empty -> {
+                Box(modifier = Modifier.fillMaxSize())
+            }
+        }
     }
 }
 
@@ -441,7 +475,6 @@ fun PromptScreen(
 
 @Composable
 fun ErrorScreen(
-    scaffoldPadding: PaddingValues,
     error: Throwable
 ) {
     Column(
@@ -449,7 +482,6 @@ fun ErrorScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
-            .padding(scaffoldPadding)
     ) {
         Card {
             Text("Error: ${error.message}")

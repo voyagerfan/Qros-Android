@@ -45,6 +45,7 @@ android {
 dependencies {
     implementation(libs.zxing.core)
     implementation(libs.hilt.android)
+    implementation(libs.androidx.navigation.compose)
     ksp(libs.hilt.android.compiler)
     ksp(libs.ksp.room)
     implementation(libs.androidx.room)
