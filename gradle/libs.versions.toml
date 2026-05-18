@@ -12,6 +12,7 @@ room = "2.8.4"
 hilt = "2.59.2"
 kspPlugin = "2.3.4"
 xzingCore = "3.5.4"
+navigationCompose = "2.9.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,6 +34,7 @@ ksp-room = { group = "androidx.room", name = "room-compiler", version.ref = "roo
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt"}
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt"}
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "xzingCore"}
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
