@@ -1,7 +1,8 @@
-package com.dev.qros.ui.screens.cameraPermission
+package com.dev.qros.ui.screens.camera.camera
 
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
@@ -32,7 +33,7 @@ fun CameraPermissionGateway(
 
     // Helper function to execute your exact step-by-step logic
     val checkAndRequestPermission = {
-        val activity = context as? androidx.activity.ComponentActivity
+        val activity = context as? ComponentActivity
 
         when {
             // Already Granted

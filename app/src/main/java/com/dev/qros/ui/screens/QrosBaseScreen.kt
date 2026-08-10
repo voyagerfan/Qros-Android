@@ -59,6 +59,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.dev.qros.QrosViewModel
+import com.dev.qros.model.CameraSubGraph
 import com.dev.qros.model.Form
 import com.dev.qros.model.Pages
 import com.dev.qros.model.QrCodeData
@@ -155,6 +156,9 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                             }
                         )
                     }
+                }
+                navigation(CameraSubGraph.CAMERA_VIEW.name, route = Pages.CAMERA_GRAPH.route) {
+
                 }
             }
         },
