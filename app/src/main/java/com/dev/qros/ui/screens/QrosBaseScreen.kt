@@ -56,6 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.dev.qros.QrosViewModel
@@ -69,6 +70,7 @@ import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
 import com.dev.qros.model.getUrl
 import com.dev.qros.model.toVCardString
+import com.dev.qros.ui.screens.camera.camera.CameraScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -81,6 +83,9 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
     val navController = rememberNavController()
     val startDestination = Pages.QR_CODE_GRAPH
     var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     val scope = rememberCoroutineScope()
 
@@ -112,7 +117,7 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
             }
         },
         floatingActionBtn = {
-            if(!showAddNewQrContent) {
+            if(!showAddNewQrContent && currentRoute == QrCodeSubGraph.HOME.name ) {
                 AddQrCodeFloatingAction {
                     showAddNewQrContent = !showAddNewQrContent
                     navController.navigate(QrCodeSubGraph.PROMPT_SCREEN.name)
@@ -158,7 +163,9 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                     }
                 }
                 navigation(CameraSubGraph.CAMERA_VIEW.name, route = Pages.CAMERA_GRAPH.route) {
-
+                    composable(CameraSubGraph.CAMERA_VIEW.name) {
+                        CameraScreen() { imageProxy ->  }
+                    }
                 }
             }
         },

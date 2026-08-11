@@ -1,8 +1,10 @@
 package com.dev.qros
 
 import android.graphics.Bitmap
-import androidx.compose.runtime.mutableStateOf
-import androidx.core.graphics.createBitmap
+import android.util.Log
+import androidx.annotation.OptIn
+import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.ImageProxy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dev.qros.model.QrCodeData
@@ -11,6 +13,8 @@ import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
 import com.dev.qros.model.mapToQrCodeData
 import com.dev.qros.roomdb.UrlDataDao
+import com.google.mlkit.vision.barcode.BarcodeScanner
+import com.google.mlkit.vision.common.InputImage
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.Writer
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,7 +33,8 @@ import javax.inject.Inject
 @HiltViewModel
 class QrosViewModel @Inject constructor(
     val urlDataDao: UrlDataDao,
-    val qrCodeWriter: Writer
+    val qrCodeWriter: Writer,
+    val barcodeScanner: BarcodeScanner
 ) : ViewModel() {
 
     init {
@@ -95,5 +100,33 @@ class QrosViewModel @Inject constructor(
 
     suspend fun addNewUrl(urlData: UrlData) {
         urlDataDao.saveUrlData(urlData)
+    }
+
+    @OptIn(ExperimentalGetImage::class)
+    fun processImage(imageProxy: ImageProxy) {
+        val mediaImage = imageProxy.image
+        if (mediaImage != null) {
+            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+
+            barcodeScanner.process(image)
+                .addOnSuccessListener { barcodes ->
+                    barcodes.firstOrNull()?.rawValue?.let { value ->
+                        /* parse results by barcode type
+                        * Barcode.TYPE_URL, TYPE_WIFI, CONTACT_INFO, TYPE_TEXT
+                        * intents for URL and contact info. store wifi and text
+                        *
+                        * */
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("CameraViewModel", "Barcode scanning failed", e)
+                }
+                .addOnCompleteListener {
+                    imageProxy.close()
+                }
+        } else {
+            // If mediaImage was null, close it immediately
+            imageProxy.close()
+        }
     }
 }
