@@ -1,13 +1,10 @@
 package com.dev.qros
 
 import android.graphics.Bitmap
-import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dev.qros.model.CameraScreenState
@@ -18,6 +15,7 @@ import com.dev.qros.model.VCardData
 import com.dev.qros.model.mapToQrCodeData
 import com.dev.qros.roomdb.UrlDataDao
 import com.google.mlkit.vision.barcode.BarcodeScanner
+import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.Writer
@@ -33,9 +31,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.google.mlkit.vision.barcode.common.Barcode
-import androidx.core.net.toUri
-import kotlin.Boolean
 
 
 @HiltViewModel
