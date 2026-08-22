@@ -1,12 +1,16 @@
 package com.dev.qros
 
 import android.graphics.Bitmap
+import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dev.qros.model.CameraScreenState
 import com.dev.qros.model.QrCodeData
 import com.dev.qros.model.QrosUiState
 import com.dev.qros.model.UrlData
@@ -29,6 +33,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.google.mlkit.vision.barcode.common.Barcode
+import androidx.core.net.toUri
+import kotlin.Boolean
+
 
 @HiltViewModel
 class QrosViewModel @Inject constructor(
@@ -36,6 +44,7 @@ class QrosViewModel @Inject constructor(
     val qrCodeWriter: Writer,
     val barcodeScanner: BarcodeScanner
 ) : ViewModel() {
+
 
     init {
         viewModelScope.launch {
@@ -69,6 +78,13 @@ class QrosViewModel @Inject constructor(
 
     private val _vCardDataState = MutableStateFlow(VCardData(fullName = ""))
     val vCardDataState = _vCardDataState.asStateFlow()
+
+    private val _cameraScreenState = MutableStateFlow(CameraScreenState(
+        isScanningEnabled = true,
+        shouldShowUrlDialog = false,
+        url = ""
+    ))
+    val cameraScreenState = _cameraScreenState.asStateFlow()
 
 
     /* ----------------- ViewModel Functions -------------------- */
@@ -110,23 +126,44 @@ class QrosViewModel @Inject constructor(
 
             barcodeScanner.process(image)
                 .addOnSuccessListener { barcodes ->
-                    barcodes.firstOrNull()?.rawValue?.let { value ->
-                        /* parse results by barcode type
-                        * Barcode.TYPE_URL, TYPE_WIFI, CONTACT_INFO, TYPE_TEXT
-                        * intents for URL and contact info. store wifi and text
-                        *
-                        * */
+                    barcodes.forEach { code ->
+                        when(code.valueType) {
+                            Barcode.TYPE_CONTACT_INFO -> {
+                                // TODO: map properties to VCardData
+                            }
+                            Barcode.TYPE_URL -> {
+                                val url = code?.url?.url ?: return@forEach
+                                deployUrlDialog(url)
+                            }
+                            // add more types as needed
+                        }
                     }
                 }
                 .addOnFailureListener { e ->
                     Log.e("CameraViewModel", "Barcode scanning failed", e)
                 }
                 .addOnCompleteListener {
+                    _cameraScreenState.value = _cameraScreenState.value.copy(
+                        isScanningEnabled = false
+                    )
                     imageProxy.close()
                 }
         } else {
             // If mediaImage was null, close it immediately
             imageProxy.close()
         }
+    }
+
+    fun shouldShowUrlDialog(shouldShow: Boolean) {
+        _cameraScreenState.value = _cameraScreenState.value.copy(
+            shouldShowUrlDialog = shouldShow
+        )
+    }
+
+    private fun deployUrlDialog(url: String) {
+        _cameraScreenState.value = _cameraScreenState.value.copy(
+            url = url,
+            shouldShowUrlDialog = true
+        )
     }
 }

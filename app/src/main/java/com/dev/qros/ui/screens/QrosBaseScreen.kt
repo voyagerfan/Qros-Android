@@ -1,5 +1,6 @@
 package com.dev.qros.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,10 +23,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
@@ -35,6 +38,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,9 +53,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -77,6 +83,7 @@ import kotlinx.coroutines.launch
 fun QrosMainScreen(viewModel: QrosViewModel) {
 
     val qrosUiState by viewModel.qrosUiState.collectAsStateWithLifecycle()
+    val cameraScreenState by viewModel.cameraScreenState.collectAsStateWithLifecycle()
     val vCardDataState by viewModel.vCardDataState.collectAsStateWithLifecycle()
     var showAddNewQrContent by rememberSaveable { mutableStateOf(false) }
 
@@ -88,6 +95,7 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     QrosMainScreen(
         qrosUiState = qrosUiState,
@@ -164,7 +172,35 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                 }
                 navigation(CameraSubGraph.CAMERA_VIEW.name, route = Pages.CAMERA_GRAPH.route) {
                     composable(CameraSubGraph.CAMERA_VIEW.name) {
-                        CameraScreen() { imageProxy ->  }
+                        if(cameraScreenState.shouldShowUrlDialog) {
+                            AlertDialog(
+                                onDismissRequest = { viewModel.shouldShowUrlDialog(false) },
+                                title = { Text("URL Found") },
+                                text = { Text("Would you like to open this URL?") },
+                                confirmButton = {
+                                    TextButton(onClick = {
+                                        viewModel.shouldShowUrlDialog(false)
+                                        val intent = Intent(
+                                            Intent.ACTION_VIEW,
+                                            cameraScreenState.url.toUri()
+                                        )
+                                        context.startActivity(intent)
+                                    }) {
+                                        Text("OK")
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { viewModel.shouldShowUrlDialog(false) }) {
+                                        Text("Cancel")
+                                    }
+                                }
+                            )
+                        }
+                        CameraScreen(
+                            isScanningEnabled = cameraScreenState.isScanningEnabled
+                        ) { imageProxy ->
+                            viewModel.processImage(imageProxy)
+                        }
                     }
                 }
             }

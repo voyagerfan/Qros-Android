@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun CameraScreen(
+    isScanningEnabled: Boolean,
     onProcessImage: (ImageProxy) -> Unit
 ) {
 
@@ -47,7 +48,9 @@ fun CameraScreen(
                 imageAnalyzer.setAnalyzer(
                     ContextCompat.getMainExecutor(ctx)
                 ) { imageProxy ->
-                   onProcessImage(imageProxy)
+                   if (isScanningEnabled) {
+                       onProcessImage(imageProxy)
+                   }
                 }
 
                 try {
