@@ -13,6 +13,7 @@ import com.dev.qros.model.QrosUiState
 import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
 import com.dev.qros.model.mapToQrCodeData
+import com.dev.qros.roomdb.ScanHistoryDao
 import com.dev.qros.roomdb.UrlDataDao
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -36,8 +37,9 @@ import javax.inject.Inject
 @HiltViewModel
 class QrosViewModel @Inject constructor(
     val urlDataDao: UrlDataDao,
+    val scanHistoryDao: ScanHistoryDao,
     val qrCodeWriter: Writer,
-    val barcodeScanner: BarcodeScanner
+    val barcodeScanner: BarcodeScanner,
 ) : ViewModel() {
 
 
@@ -125,6 +127,13 @@ class QrosViewModel @Inject constructor(
                         when(code.valueType) {
                             Barcode.TYPE_CONTACT_INFO -> {
                                 // TODO: map properties to VCardData
+                                /*
+                                1. map the data to a vcard object
+                                2. save the vcard to a scannedData database
+                                3. ask user if they want to add to contact
+                                    3a. if yes, intent + putExtra to Contacts activity
+                                    3b. if no return@forEach
+                                 */
                             }
                             Barcode.TYPE_URL -> {
                                 val url = code?.url?.url ?: return@forEach
@@ -132,6 +141,7 @@ class QrosViewModel @Inject constructor(
                             }
                             // add more types as needed
                         }
+                        // rest the cameraState to default settings to allow fresh start for other barcodes
                     }
                 }
                 .addOnFailureListener { e ->

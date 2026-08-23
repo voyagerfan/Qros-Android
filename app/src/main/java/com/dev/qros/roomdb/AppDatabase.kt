@@ -8,4 +8,5 @@ import com.dev.qros.model.UrlData
 @Database(entities = [UrlData::class], version = 1, exportSchema = false)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun urlDataDao(): UrlDataDao
+    abstract fun scanHistoryDao(): ScanHistoryDao
 }
