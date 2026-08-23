@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 data class Scan(
     @PrimaryKey(autoGenerate = true) val uid: Int = 0,
     @ColumnInfo val type: ScanType,
-    @ColumnInfo val payload: String?,
+    @ColumnInfo val payload: String? = null,
     @ColumnInfo val timestamp: Long
 )
 

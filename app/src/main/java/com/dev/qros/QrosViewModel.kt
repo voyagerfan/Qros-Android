@@ -7,6 +7,7 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dev.qros.extensions.toScan
 import com.dev.qros.model.CameraScreenState
 import com.dev.qros.model.QrCodeData
 import com.dev.qros.model.QrosUiState
@@ -124,16 +125,15 @@ class QrosViewModel @Inject constructor(
             barcodeScanner.process(image)
                 .addOnSuccessListener { barcodes ->
                     barcodes.forEach { code ->
+
+                        // convert barcode to scan and insert scan into database
+                        viewModelScope.launch { scanHistoryDao.insertScan(code.toScan()) }
+
+                        // parse actions based on type
                         when(code.valueType) {
                             Barcode.TYPE_CONTACT_INFO -> {
-                                // TODO: map properties to VCardData
-                                /*
-                                1. map the data to a vcard object
-                                2. save the vcard to a scannedData database
-                                3. ask user if they want to add to contact
-                                    3a. if yes, intent + putExtra to Contacts activity
-                                    3b. if no return@forEach
-                                 */
+
+                                deployContactsDialog()
                             }
                             Barcode.TYPE_URL -> {
                                 val url = code?.url?.url ?: return@forEach
@@ -169,6 +169,12 @@ class QrosViewModel @Inject constructor(
         _cameraScreenState.value = _cameraScreenState.value.copy(
             url = url,
             shouldShowUrlDialog = true
+        )
+    }
+
+    private fun deployContactsDialog() {
+        _cameraScreenState.value = _cameraScreenState.value.copy(
+            shouldShowContactsDialog = true
         )
     }
 }
