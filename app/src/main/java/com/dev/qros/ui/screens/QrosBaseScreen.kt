@@ -195,6 +195,9 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                                 }
                             )
                         }
+                        if (cameraScreenState.shouldShowContactsDialog) {
+                            // Add alert Dialog here.
+                        }
                         CameraScreen(
                             isScanningEnabled = cameraScreenState.isScanningEnabled
                         ) { imageProxy ->

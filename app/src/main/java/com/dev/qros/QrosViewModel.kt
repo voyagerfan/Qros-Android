@@ -7,8 +7,10 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dev.qros.extensions.toContactInfo
 import com.dev.qros.extensions.toScan
 import com.dev.qros.model.CameraScreenState
+import com.dev.qros.model.ContactInfo
 import com.dev.qros.model.QrCodeData
 import com.dev.qros.model.QrosUiState
 import com.dev.qros.model.UrlData
@@ -80,7 +82,9 @@ class QrosViewModel @Inject constructor(
     private val _cameraScreenState = MutableStateFlow(CameraScreenState(
         isScanningEnabled = true,
         shouldShowUrlDialog = false,
-        url = ""
+        shouldShowContactsDialog = false,
+        url = "",
+        contactInfo = null
     ))
     val cameraScreenState = _cameraScreenState.asStateFlow()
 
@@ -116,6 +120,8 @@ class QrosViewModel @Inject constructor(
         urlDataDao.saveUrlData(urlData)
     }
 
+    //TODO: POTENTIAL ISSUE: MLKit can pick up multiple barcodes. Close image proxy after onSuccess fires
+    //TODO: handle the barcode(s) as a list of tasks for the user to process or dismiss. dont fire composables immediately
     @OptIn(ExperimentalGetImage::class)
     fun processImage(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
@@ -126,13 +132,13 @@ class QrosViewModel @Inject constructor(
                 .addOnSuccessListener { barcodes ->
                     barcodes.forEach { code ->
 
-                        // convert barcode to scan and insert scan into database
+                        // convert barcode to scan object and insert into database
                         viewModelScope.launch { scanHistoryDao.insertScan(code.toScan()) }
 
                         // parse actions based on type
                         when(code.valueType) {
                             Barcode.TYPE_CONTACT_INFO -> {
-
+                                loadScannedContactInfo(code.toContactInfo())
                                 deployContactsDialog()
                             }
                             Barcode.TYPE_URL -> {
@@ -141,7 +147,7 @@ class QrosViewModel @Inject constructor(
                             }
                             // add more types as needed
                         }
-                        // rest the cameraState to default settings to allow fresh start for other barcodes
+                        // TODO: rest the cameraState to default settings to allow fresh start for other barcodes
                     }
                 }
                 .addOnFailureListener { e ->
@@ -175,6 +181,12 @@ class QrosViewModel @Inject constructor(
     private fun deployContactsDialog() {
         _cameraScreenState.value = _cameraScreenState.value.copy(
             shouldShowContactsDialog = true
+        )
+    }
+
+    private fun loadScannedContactInfo(contactInfo: ContactInfo) {
+        _cameraScreenState.value = _cameraScreenState.value.copy(
+            contactInfo = contactInfo
         )
     }
 }
