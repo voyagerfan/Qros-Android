@@ -1,6 +1,7 @@
 package com.dev.qros.extensions
 
 import com.dev.qros.model.ContactInfo
+import com.dev.qros.model.ContactNumbers
 import com.dev.qros.model.Scan
 import com.dev.qros.model.ScanType
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -13,19 +14,34 @@ fun Barcode.toScan(): Scan {
     )
 }
 
-/* TODO: create mapper to a ContactInfo Object
-
 fun Barcode.toContactInfo(): ContactInfo {
     val contactInfo = this.contactInfo
+    val faxNumbers = mutableListOf<String?>()
+    val phoneNumbers = mutableListOf<String?>()
+    val contactEmails = mutableListOf<String?>()
+
+    // parse the numbers separating fax from everything else
+    contactInfo?.phones?.forEach { phone ->
+        when(phone.type) {
+            Barcode.Phone.TYPE_FAX -> faxNumbers.add(phone.number)
+            else -> phoneNumbers.add(phone.number)
+        }
+    }
+
+    // parse the emails addresses into a list
+    contactInfo?.emails?.forEach { email ->
+        contactEmails.add(email.address)
+    }
+
     return ContactInfo(
-        fullName = contactInfo?.name ?: "",
-        phone = contactInfo?.phones ?: "",
-        email = email ?: "",
-        company = organization ?: "",
-        jobTitle = title ?: "",
-        url = url ?: ""
+        fullName = contactInfo?.name?.formattedName,
+        phone = ContactNumbers(faxNums = faxNumbers, phoneNums = phoneNumbers),
+        email = contactEmails,
+        company = contactInfo?.organization,
+        jobTitle = contactInfo?.title,
+        url = contactInfo?.urls
     )
-}*/
+}
 
 fun Int.scanTypeToEnum(): ScanType {
     return when(this) {
