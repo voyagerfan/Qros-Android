@@ -175,6 +175,10 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                             // TODO: refactor to fire bottom modal sheet
                         }
                         CameraScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            fab = {
+                                //TODO: add state-based FAB (error, loading, success)
+                            },
                             isScanningEnabled = cameraScreenState.isScanningEnabled
                         ) { imageProxy ->
                             viewModel.processImage(imageProxy)
