@@ -12,6 +12,7 @@ import com.dev.qros.extensions.toScan
 import com.dev.qros.model.CameraScreenState
 import com.dev.qros.model.ContactInfo
 import com.dev.qros.model.QrCodeData
+import com.dev.qros.model.QrosBarcode
 import com.dev.qros.model.QrosUiState
 import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
@@ -49,9 +50,16 @@ class QrosViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             // Just for testing the pager!
-            val testSites = listOf("https://google.com", "https://github.com", "https://linkedin.com")
+            val testSites =
+                listOf("https://google.com", "https://github.com", "https://linkedin.com")
             testSites.forEach { site ->
-                urlDataDao.saveUrlData(UrlData(name = "Test $site", url = site, description = "Demo"))
+                urlDataDao.saveUrlData(
+                    UrlData(
+                        name = "Test $site",
+                        url = site,
+                        description = "Demo"
+                    )
+                )
             }
         }
     }
@@ -79,13 +87,13 @@ class QrosViewModel @Inject constructor(
     private val _vCardDataState = MutableStateFlow(VCardData(fullName = ""))
     val vCardDataState = _vCardDataState.asStateFlow()
 
-    private val _cameraScreenState = MutableStateFlow(CameraScreenState(
-        isScanningEnabled = true,
-        shouldShowUrlDialog = false,
-        shouldShowContactsDialog = false,
-        url = "",
-        contactInfo = null
-    ))
+    private val _cameraScreenState = MutableStateFlow(
+        CameraScreenState(
+            isScanningEnabled = true,
+            shouldShowBottomDialogCta = false,
+            currentQrosBarcodeList = emptyList()
+        )
+    )
     val cameraScreenState = _cameraScreenState.asStateFlow()
 
 
@@ -98,7 +106,7 @@ class QrosViewModel @Inject constructor(
     private fun createQrCode(qrCodeWriter: Writer, url: String): Bitmap {
         val size = 1000
         val bitMatrix = qrCodeWriter.encode(
-           url,
+            url,
             BarcodeFormat.QR_CODE,
             size,
             size
@@ -120,44 +128,54 @@ class QrosViewModel @Inject constructor(
         urlDataDao.saveUrlData(urlData)
     }
 
-    //TODO: POTENTIAL ISSUE: MLKit can pick up multiple barcodes. Close image proxy after onSuccess fires
-    //TODO: handle the barcode(s) as a list of tasks for the user to process or dismiss. dont fire composables immediately
     @OptIn(ExperimentalGetImage::class)
     fun processImage(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+            val qrosBarcodeList = mutableListOf<QrosBarcode>()
 
             barcodeScanner.process(image)
                 .addOnSuccessListener { barcodes ->
-                    barcodes.forEach { code ->
+                    barcodes.forEachIndexed { index, code ->
 
                         // convert barcode to scan object and insert into database
                         viewModelScope.launch { scanHistoryDao.insertScan(code.toScan()) }
 
-                        // parse actions based on type
-                        when(code.valueType) {
+                        // parse barcode into custom objects, add to captured barcodeList
+                        when (code.valueType) {
                             Barcode.TYPE_CONTACT_INFO -> {
-                                loadScannedContactInfo(code.toContactInfo())
-                                deployContactsDialog()
+                                qrosBarcodeList.add(
+                                    QrosBarcode.Contact(
+                                        contactInfo = code.toContactInfo(),
+                                        key = index
+                                    )
+                                )
                             }
+
                             Barcode.TYPE_URL -> {
-                                val url = code?.url?.url ?: return@forEach
-                                deployUrlDialog(url)
+                                qrosBarcodeList.add(
+                                    QrosBarcode.Url(
+                                        url = code?.url?.url ?: "",
+                                        key = index
+                                    )
+                                )
                             }
                             // add more types as needed
                         }
-                        // TODO: rest the cameraState to default settings to allow fresh start for other barcodes
                     }
+                    _cameraScreenState.value = _cameraScreenState.value.copy(
+                        isScanningEnabled = false,
+                        currentQrosBarcodeList = qrosBarcodeList
+                    )
+                    imageProxy.close()
+
                 }
                 .addOnFailureListener { e ->
                     Log.e("CameraViewModel", "Barcode scanning failed", e)
                 }
                 .addOnCompleteListener {
-                    _cameraScreenState.value = _cameraScreenState.value.copy(
-                        isScanningEnabled = false
-                    )
-                    imageProxy.close()
+                    // TODO: keep listener for now
                 }
         } else {
             // If mediaImage was null, close it immediately
@@ -165,28 +183,9 @@ class QrosViewModel @Inject constructor(
         }
     }
 
-    fun shouldShowUrlDialog(shouldShow: Boolean) {
+    private fun updateCurrentQrosBarcodeList(qrosBarcodeList: List<QrosBarcode>) {
         _cameraScreenState.value = _cameraScreenState.value.copy(
-            shouldShowUrlDialog = shouldShow
-        )
-    }
-
-    private fun deployUrlDialog(url: String) {
-        _cameraScreenState.value = _cameraScreenState.value.copy(
-            url = url,
-            shouldShowUrlDialog = true
-        )
-    }
-
-    private fun deployContactsDialog() {
-        _cameraScreenState.value = _cameraScreenState.value.copy(
-            shouldShowContactsDialog = true
-        )
-    }
-
-    private fun loadScannedContactInfo(contactInfo: ContactInfo) {
-        _cameraScreenState.value = _cameraScreenState.value.copy(
-            contactInfo = contactInfo
+            currentQrosBarcodeList = qrosBarcodeList
         )
     }
 }

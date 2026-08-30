@@ -171,32 +171,8 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                 }
                 navigation(CameraSubGraph.CAMERA_VIEW.name, route = Pages.CAMERA_GRAPH.route) {
                     composable(CameraSubGraph.CAMERA_VIEW.name) {
-                        if(cameraScreenState.shouldShowUrlDialog) {
-                            AlertDialog(
-                                onDismissRequest = { viewModel.shouldShowUrlDialog(false) },
-                                title = { Text("URL Found") },
-                                text = { Text("Would you like to open this URL?") },
-                                confirmButton = {
-                                    TextButton(onClick = {
-                                        viewModel.shouldShowUrlDialog(false)
-                                        val intent = Intent(
-                                            Intent.ACTION_VIEW,
-                                            cameraScreenState.url.toUri()
-                                        )
-                                        context.startActivity(intent)
-                                    }) {
-                                        Text("OK")
-                                    }
-                                },
-                                dismissButton = {
-                                    TextButton(onClick = { viewModel.shouldShowUrlDialog(false) }) {
-                                        Text("Cancel")
-                                    }
-                                }
-                            )
-                        }
-                        if (cameraScreenState.shouldShowContactsDialog) {
-                            // Add alert Dialog here.
+                        if (cameraScreenState.shouldShowBottomDialogCta) {
+                            // TODO: refactor to fire bottom modal sheet
                         }
                         CameraScreen(
                             isScanningEnabled = cameraScreenState.isScanningEnabled
