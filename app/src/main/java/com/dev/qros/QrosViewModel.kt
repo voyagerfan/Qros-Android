@@ -87,6 +87,7 @@ class QrosViewModel @Inject constructor(
     private val _vCardDataState = MutableStateFlow(VCardData(fullName = ""))
     val vCardDataState = _vCardDataState.asStateFlow()
 
+    // TODO: consider creating error/scanning/success states, then add currentQrosBarcodeList
     private val _cameraScreenState = MutableStateFlow(
         CameraScreenState(
             isScanningEnabled = true,
