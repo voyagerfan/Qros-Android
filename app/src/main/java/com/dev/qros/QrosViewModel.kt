@@ -7,6 +7,7 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.util.copy
 import com.dev.qros.extensions.toContactInfo
 import com.dev.qros.extensions.toScan
 import com.dev.qros.model.CameraScreenState
@@ -187,6 +188,28 @@ class QrosViewModel @Inject constructor(
     private fun updateCurrentQrosBarcodeList(qrosBarcodeList: List<QrosBarcode>) {
         _cameraScreenState.value = _cameraScreenState.value.copy(
             currentQrosBarcodeList = qrosBarcodeList
+        )
+    }
+
+    fun updateActionBarcodeListItem(itemKey: Int) {
+        val updatedBarcodeList = cameraScreenState.value.currentQrosBarcodeList
+            .map { barcode ->
+                if (barcode.key == itemKey) {
+                    val barcodeUpdate = when (barcode) {
+                        is QrosBarcode.Contact -> barcode.copy(isActioned = true)
+                        is QrosBarcode.Url -> barcode.copy(isActioned = true)
+                    }
+                    barcodeUpdate
+                } else {
+                    barcode
+                }
+            }
+        updateCurrentQrosBarcodeList(updatedBarcodeList)
+    }
+
+    fun shouldShowBottomDialogCta(shouldShow: Boolean) {
+        _cameraScreenState.value = _cameraScreenState.value.copy(
+            shouldShowBottomDialogCta = shouldShow
         )
     }
 }

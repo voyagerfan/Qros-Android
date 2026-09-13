@@ -1,6 +1,7 @@
 package com.dev.qros.ui.screens
 
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,13 +22,11 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
@@ -37,7 +36,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,7 +55,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -65,19 +63,25 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.dev.qros.QrosViewModel
+import com.dev.qros.R
 import com.dev.qros.model.CameraSubGraph
+import com.dev.qros.model.ContactInfo
 import com.dev.qros.model.Form
 import com.dev.qros.model.Pages
 import com.dev.qros.model.QrCodeData
 import com.dev.qros.model.QrCodeSubGraph
+import com.dev.qros.model.QrosBarcode
 import com.dev.qros.model.QrosUiState
 import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
 import com.dev.qros.model.getUrl
 import com.dev.qros.model.toVCardString
+import com.dev.qros.ui.BottomSheetScanCta
 import com.dev.qros.ui.screens.camera.camera.CameraScreen
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QrosMainScreen(viewModel: QrosViewModel) {
 
@@ -94,6 +98,8 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState()
+
     val context = LocalContext.current
 
     QrosMainScreen(
@@ -171,9 +177,6 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                 }
                 navigation(CameraSubGraph.CAMERA_VIEW.name, route = Pages.CAMERA_GRAPH.route) {
                     composable(CameraSubGraph.CAMERA_VIEW.name) {
-                        if (cameraScreenState.shouldShowBottomDialogCta) {
-                            // TODO: refactor to fire bottom modal sheet
-                        }
                         CameraScreen(
                             modifier = Modifier.padding(innerPadding),
                             fab = {
@@ -188,6 +191,36 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
             }
         },
     )
+
+    if (cameraScreenState.shouldShowBottomDialogCta) {
+        BottomSheetScanCta(
+            barcodeList = cameraScreenState.currentQrosBarcodeList,
+            sheetState = sheetState,
+            onActionClick = { isPositive, barcode ->
+                if (isPositive) {
+                    when(barcode) {
+                        is QrosBarcode.Contact -> {
+                            context.startActivity(
+                                ContactInfo.toContactAppsIntent(barcode.contactInfo)
+                            )
+                        }
+                        is QrosBarcode.Url -> {
+                            context.startActivity(
+                                Intent(
+                                    Intent.ACTION_VIEW,
+                                    barcode.url.toUri()
+                                )
+                            )
+                        }
+                    }
+                }
+                viewModel.updateActionBarcodeListItem(barcode.key)
+            },
+            onDismiss = {
+                viewModel.shouldShowBottomDialogCta(false)
+            }
+        )
+    }
 }
 
 @Composable
@@ -524,7 +557,12 @@ fun AddQrCodeFloatingAction(
 ) {
     ExtendedFloatingActionButton(
         onClick = onClick,
-        icon = { Icon(Icons.Filled.Add, "Add Icon") },
+        icon = {
+            Icon(
+                painterResource(R.drawable.outline_add_24),
+                contentDescription = null
+            )
+        },
         text = { Text("Add QR Code") }
     )
 }

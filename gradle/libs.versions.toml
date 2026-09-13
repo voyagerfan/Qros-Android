@@ -7,7 +7,7 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
 kotlin = "2.0.21"
-composeBom = "2024.09.00"
+composeBom = "2028.08.00"
 room = "2.8.4"
 hilt = "2.59.2"
 kspPlugin = "2.3.4"
@@ -15,6 +15,8 @@ xzingCore = "3.5.4"
 navigationCompose = "2.9.8"
 cameraXVersion = "1.6.0"
 mlkitBarcode = "17.3.0"
+material3 = "1.4.0"
+roomKtx = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,6 +44,8 @@ camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "c
 camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraXVersion"}
 camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraXVersion"}
 mlkit-barcode = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcode"}
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 
 
 [plugins]
