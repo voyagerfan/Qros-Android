@@ -15,6 +15,7 @@ import com.dev.qros.model.ContactInfo
 import com.dev.qros.model.QrCodeData
 import com.dev.qros.model.QrosBarcode
 import com.dev.qros.model.QrosUiState
+import com.dev.qros.model.ScanState
 import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
 import com.dev.qros.model.mapToQrCodeData
@@ -93,7 +94,8 @@ class QrosViewModel @Inject constructor(
         CameraScreenState(
             isScanningEnabled = true,
             shouldShowBottomDialogCta = false,
-            currentQrosBarcodeList = emptyList()
+            currentQrosBarcodeList = emptyList(),
+            scanState = ScanState.Scanning
         )
     )
     val cameraScreenState = _cameraScreenState.asStateFlow()
