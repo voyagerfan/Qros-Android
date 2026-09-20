@@ -8,13 +8,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.CropFree
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -37,13 +40,16 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dev.qros.model.QrosBarcode
+import com.dev.qros.model.ScanMenuAction
+import com.dev.qros.model.ScanMenuConfig
 import com.dev.qros.model.ScanState
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CameraScreenFab(
-    scanState: ScanState
+    scanState: ScanState,
+    onFabMenuSelected: (ScanMenuConfig) -> Unit
 ) {
     MaterialExpressiveTheme {
         var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
@@ -67,24 +73,18 @@ fun CameraScreenFab(
                     }
                 }
             ) {
-                // Option 1
-                FloatingActionButtonMenuItem(
-                    onClick = { fabMenuExpanded = false },
-                    icon = { Icon(Icons.Default.Create, contentDescription = null) },
-                    text = { Text("Create New") }
-                )
-                // Option 2
-                FloatingActionButtonMenuItem(
-                    onClick = { fabMenuExpanded = false },
-                    icon = { Icon(Icons.Default.Favorite, contentDescription = null) },
-                    text = { Text("Favorite") }
-                )
-                // Option 3
-                FloatingActionButtonMenuItem(
-                    onClick = { fabMenuExpanded = false },
-                    icon = { Icon(Icons.Default.Share, contentDescription = null) },
-                    text = { Text("Share Item") }
-                )
+                scanMenuContentData(scanState = scanState)
+                    .forEach { config ->
+                        FloatingActionButtonMenuItem(
+                            onClick = {
+                                fabMenuExpanded = false
+                                onFabMenuSelected(config)
+                            },
+                            icon = { Icon(config.icon, contentDescription = null) },
+                            text = { Text(text = config.label) }
+                        )
+                    }
+
             }
         }
     }
@@ -125,16 +125,73 @@ fun ToggleContent(
     }
 }
 
+fun scanMenuContentData(
+    scanState: ScanState,
+): List<ScanMenuConfig> {
+    return when(scanState) {
+        is ScanState.Error -> listOf(
+                ScanMenuConfig(
+                action = ScanMenuAction.ERROR_CANCEL,
+                icon = Icons.Default.Close,
+                label = "Cancel",
+            ),
+            ScanMenuConfig(
+                action = ScanMenuAction.ERROR_RETRY,
+                icon = Icons.Default.Refresh,
+                label = "Try again",
+
+            )
+        )
+        is ScanState.Scanning -> listOf(
+            ScanMenuConfig(
+                action = ScanMenuAction.SCANNING_STOP,
+                icon = Icons.Default.Stop,
+                label = "Stop Scanning",
+            )
+        )
+        is ScanState.Ready -> listOf(
+            ScanMenuConfig(
+                action = ScanMenuAction.IDLE_START_SCAN,
+                icon = Icons.Default.PlayArrow,
+                label = "Start Scanning",
+            ),
+            ScanMenuConfig(
+                action = ScanMenuAction.IDLE_TO_RECENT_SCANS,
+                icon = Icons.AutoMirrored.Filled.List,
+                label = "See recent scans",
+            )
+        )
+        is ScanState.Success -> listOf(
+
+            ScanMenuConfig(
+                action = ScanMenuAction.SUCCESS_DEPLOY_SHEET,
+                icon = Icons.Default.KeyboardArrowUp,
+                label = "See Current Scans",
+            ),
+            ScanMenuConfig(
+                action = ScanMenuAction.SUCCESS_CONTINUE_SCANNING,
+                icon = Icons.Default.Add,
+                label = "Continue Scanning",
+            ),
+            ScanMenuConfig(
+                action = ScanMenuAction.SUCCESS_CANCEL,
+                icon = Icons.Default.Close,
+                label = "Im Done",
+            )
+        )
+    }
+}
+
 
 @Preview
 @Composable
 fun PreviewCameraScreenFab() {
-    // Testing
 
     val emptyMockList: List<QrosBarcode> = emptyList()
     val throwable = Throwable()
     CameraScreenFab(
-        scanState = ScanState.Ready
+        scanState = ScanState.Error(throwable),
+        onFabMenuSelected = {}
     )
 }
 

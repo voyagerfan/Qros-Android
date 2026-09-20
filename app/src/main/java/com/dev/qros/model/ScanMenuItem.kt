@@ -1,0 +1,12 @@
+package com.dev.qros.model
+
+enum class ScanMenuAction {
+    ERROR_CANCEL,
+    ERROR_RETRY,
+    SUCCESS_DEPLOY_SHEET,
+    SUCCESS_CONTINUE_SCANNING,
+    SUCCESS_CANCEL,
+    SCANNING_STOP,
+    IDLE_START_SCAN,
+    IDLE_TO_RECENT_SCANS
+}

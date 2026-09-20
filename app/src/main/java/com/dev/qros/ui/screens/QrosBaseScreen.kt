@@ -80,6 +80,9 @@ import com.dev.qros.ui.BottomSheetScanCta
 import com.dev.qros.ui.screens.camera.camera.CameraScreen
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import com.dev.qros.model.ScanMenuAction
+import com.dev.qros.model.ScanMenuConfig
+import com.dev.qros.ui.components.CameraScreenFab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -180,7 +183,22 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                         CameraScreen(
                             modifier = Modifier.padding(innerPadding),
                             fab = {
-                                //TODO: add state-based FAB (error, loading, success)
+                                CameraScreenFab(scanState = cameraScreenState.scanState) { menuAction ->
+                                    /*TODO: create view model functions and map each
+                                    *  to a viewmodel function or hook up to navController
+                                    * TODO: remember to update the state of the viewmodel to flip fab icon
+                                    * */
+                                    when (menuAction.action) {
+                                        ScanMenuAction.SUCCESS_CONTINUE_SCANNING -> {}
+                                        ScanMenuAction.SUCCESS_DEPLOY_SHEET -> {}
+                                        ScanMenuAction.SUCCESS_CANCEL -> {}
+                                        ScanMenuAction.IDLE_START_SCAN -> {}
+                                        ScanMenuAction.IDLE_TO_RECENT_SCANS -> {}
+                                        ScanMenuAction.ERROR_RETRY -> {}
+                                        ScanMenuAction.ERROR_CANCEL -> {}
+                                        ScanMenuAction.SCANNING_STOP -> {}
+                                    }
+                                }
                             },
                             isScanningEnabled = cameraScreenState.isScanningEnabled
                         ) { imageProxy ->
