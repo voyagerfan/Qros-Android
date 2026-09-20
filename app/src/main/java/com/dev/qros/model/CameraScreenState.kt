@@ -11,4 +11,5 @@ sealed interface ScanState {
     data object Scanning: ScanState
     data class Success(val data: List<QrosBarcode> ): ScanState
     data class Error(val error: Throwable): ScanState
+    data object Ready: ScanState
 }
