@@ -15,6 +15,7 @@ import com.dev.qros.model.ContactInfo
 import com.dev.qros.model.QrCodeData
 import com.dev.qros.model.QrosBarcode
 import com.dev.qros.model.QrosUiState
+import com.dev.qros.model.Scan
 import com.dev.qros.model.ScanState
 import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
@@ -134,6 +135,10 @@ class QrosViewModel @Inject constructor(
 
     @OptIn(ExperimentalGetImage::class)
     fun processImage(imageProxy: ImageProxy) {
+        if (!_cameraScreenState.value.isScanningEnabled) {
+            imageProxy.close()
+            return
+        }
         val mediaImage = imageProxy.image
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
@@ -176,6 +181,7 @@ class QrosViewModel @Inject constructor(
 
                 }
                 .addOnFailureListener { e ->
+                    updateScanStateToError(e)
                     Log.e("CameraViewModel", "Barcode scanning failed", e)
                 }
                 .addOnCompleteListener {
@@ -212,6 +218,27 @@ class QrosViewModel @Inject constructor(
     fun shouldShowBottomDialogCta(shouldShow: Boolean) {
         _cameraScreenState.value = _cameraScreenState.value.copy(
             shouldShowBottomDialogCta = shouldShow
+        )
+    }
+
+    fun stopScanning() {
+        _cameraScreenState.value = _cameraScreenState.value.copy(
+            isScanningEnabled = false,
+            scanState = ScanState.Ready
+        )
+    }
+
+    fun startScanning() {
+        _cameraScreenState.value = _cameraScreenState.value.copy(
+            isScanningEnabled = true,
+            scanState = ScanState.Scanning
+        )
+    }
+
+    fun updateScanStateToError(e: Throwable) {
+        _cameraScreenState.value = _cameraScreenState.value.copy(
+            isScanningEnabled = true,
+            scanState = ScanState.Error(error = e)
         )
     }
 }

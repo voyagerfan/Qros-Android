@@ -82,6 +82,7 @@ import kotlinx.coroutines.launch
 import androidx.core.net.toUri
 import com.dev.qros.model.ScanMenuAction
 import com.dev.qros.model.ScanMenuConfig
+import com.dev.qros.model.ScanState
 import com.dev.qros.ui.components.CameraScreenFab
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -184,23 +185,27 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                             modifier = Modifier.padding(innerPadding),
                             fab = {
                                 CameraScreenFab(scanState = cameraScreenState.scanState) { menuAction ->
-                                    /*TODO: create view model functions and map each
-                                    *  to a viewmodel function or hook up to navController
+                                    /*TODO: ScanMenuAction.IDLE_TO_RECENT_SCANS hook up to navController
                                     * TODO: remember to update the state of the viewmodel to flip fab icon
                                     * */
                                     when (menuAction.action) {
-                                        ScanMenuAction.SUCCESS_CONTINUE_SCANNING -> {}
-                                        ScanMenuAction.SUCCESS_DEPLOY_SHEET -> {}
-                                        ScanMenuAction.SUCCESS_CANCEL -> {}
-                                        ScanMenuAction.IDLE_START_SCAN -> {}
-                                        ScanMenuAction.IDLE_TO_RECENT_SCANS -> {}
-                                        ScanMenuAction.ERROR_RETRY -> {}
-                                        ScanMenuAction.ERROR_CANCEL -> {}
-                                        ScanMenuAction.SCANNING_STOP -> {}
+                                        ScanMenuAction.SUCCESS_CONTINUE_SCANNING -> {
+                                            viewModel.startScanning()
+
+                                        }
+                                        ScanMenuAction.SUCCESS_DEPLOY_SHEET -> {
+                                            viewModel.stopScanning()
+                                            viewModel.shouldShowBottomDialogCta(true)
+                                        }
+                                        ScanMenuAction.SUCCESS_CANCEL -> { viewModel.stopScanning() }
+                                        ScanMenuAction.IDLE_START_SCAN -> { viewModel.startScanning() }
+                                        ScanMenuAction.IDLE_TO_RECENT_SCANS -> { /*TODO navigate to a summary screen*/ }
+                                        ScanMenuAction.ERROR_RETRY -> { viewModel.startScanning() }
+                                        ScanMenuAction.ERROR_CANCEL -> { viewModel.stopScanning() }
+                                        ScanMenuAction.SCANNING_STOP -> { viewModel.stopScanning() }
                                     }
                                 }
                             },
-                            isScanningEnabled = cameraScreenState.isScanningEnabled
                         ) { imageProxy ->
                             viewModel.processImage(imageProxy)
                         }
