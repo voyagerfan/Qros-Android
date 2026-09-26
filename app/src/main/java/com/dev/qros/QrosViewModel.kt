@@ -135,7 +135,27 @@ class QrosViewModel @Inject constructor(
 
     @OptIn(ExperimentalGetImage::class)
     fun processImage(imageProxy: ImageProxy) {
+        when (_cameraScreenState.value.scanState) {
+            is ScanState.Scanning -> {
+                Log.d("scanState", "scanState is scanning")
+            }
+
+            is ScanState.Ready -> {
+                Log.d("scanState", "scanState is ready")
+            }
+
+            is ScanState.Error -> {
+                Log.d("scanState", "scanState is error")
+            }
+
+            is ScanState.Success -> {
+                Log.d("scanState", "scanState is success")
+            }
+        }
+
+
         if (!_cameraScreenState.value.isScanningEnabled) {
+            Log.d("QrosScanner", "isScanningEnabled is false, returning")
             imageProxy.close()
             return
         }
@@ -146,8 +166,11 @@ class QrosViewModel @Inject constructor(
 
             barcodeScanner.process(image)
                 .addOnSuccessListener { barcodes ->
+                    Log.d("onSuccess", "Scan success callback hit! Found ${barcodes.size} barcodes.")
+                    if (barcodes.isNotEmpty()) {
+                        Log.d("barcodesFound!", "Scan success callback hit! Found ${barcodes.size} barcodes.")
+                    }
                     barcodes.forEachIndexed { index, code ->
-
                         // convert barcode to scan object and insert into database
                         viewModelScope.launch { scanHistoryDao.insertScan(code.toScan()) }
 
@@ -173,11 +196,14 @@ class QrosViewModel @Inject constructor(
                             // add more types as needed
                         }
                     }
-                    _cameraScreenState.value = _cameraScreenState.value.copy(
-                        isScanningEnabled = false,
-                        currentQrosBarcodeList = qrosBarcodeList
-                    )
-                    imageProxy.close()
+                    if(qrosBarcodeList.isNotEmpty()) {
+                        _cameraScreenState.value = _cameraScreenState.value.copy(
+                            isScanningEnabled = false,
+                            scanState = ScanState.Success(data = qrosBarcodeList),
+                            currentQrosBarcodeList = qrosBarcodeList
+                        )
+                        imageProxy.close()
+                    }
 
                 }
                 .addOnFailureListener { e ->
@@ -185,6 +211,7 @@ class QrosViewModel @Inject constructor(
                     Log.e("CameraViewModel", "Barcode scanning failed", e)
                 }
                 .addOnCompleteListener {
+                    imageProxy.close()
                     // TODO: keep listener for now
                 }
         } else {

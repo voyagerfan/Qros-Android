@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import com.dev.qros.model.Scan
 import com.dev.qros.model.UrlData
 
-@Database(entities = [UrlData::class, Scan::class], version = 2, exportSchema = false)
+@Database(entities = [UrlData::class, Scan::class], version = 1, exportSchema = false)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun urlDataDao(): UrlDataDao
     abstract fun scanHistoryDao(): ScanHistoryDao

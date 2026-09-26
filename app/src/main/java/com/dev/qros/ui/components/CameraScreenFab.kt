@@ -1,5 +1,6 @@
 package com.dev.qros.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -103,6 +104,19 @@ fun ToggleContent(
         is ScanState.Error -> Icons.Default.Warning
         is ScanState.Success -> Icons.Default.CheckCircle
     }
+
+    /*when (scanState) {
+        is ScanState.Scanning -> {
+            Log.d("scanState", "scanState is scanning")
+        }
+        is ScanState.Ready -> {
+            Log.d("scanState", "scanState is ready")
+        }
+        is ScanState.Error -> {
+            Log.d("scanState", "scanState is error")}
+        is ScanState.Success -> {
+            Log.d("scanState", "scanState is success")}
+    }*/
 
     if (checkedProgress > 0.5f) {
         Icon(

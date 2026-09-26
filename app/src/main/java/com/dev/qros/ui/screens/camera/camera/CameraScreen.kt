@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import java.util.concurrent.Executors
 
 
 @OptIn(ExperimentalGetImage::class)
@@ -38,6 +39,7 @@ fun CameraScreen(
             factory = { ctx ->
                 val previewView = PreviewView(ctx)
                 val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                val cameraExecutor = Executors.newSingleThreadExecutor()
 
                 cameraProviderFuture.addListener({
                     val cameraProvider = cameraProviderFuture.get()
@@ -53,7 +55,7 @@ fun CameraScreen(
                         .build()
 
                     imageAnalyzer.setAnalyzer(
-                        ContextCompat.getMainExecutor(ctx)
+                        cameraExecutor
                     ) { imageProxy -> onProcessImage(imageProxy) }
 
                     try {
