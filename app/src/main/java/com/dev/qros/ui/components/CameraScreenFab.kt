@@ -52,6 +52,7 @@ fun CameraScreenFab(
     scanState: ScanState,
     onFabMenuSelected: (ScanMenuConfig) -> Unit
 ) {
+    //TODO: icons are not showing in on test device but are in emulator
     MaterialExpressiveTheme {
         var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
         Box(
