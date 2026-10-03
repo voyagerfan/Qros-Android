@@ -185,13 +185,11 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                             modifier = Modifier.padding(innerPadding),
                             fab = {
                                 CameraScreenFab(scanState = cameraScreenState.scanState) { menuAction ->
-                                    /*TODO: ScanMenuAction.IDLE_TO_RECENT_SCANS hook up to navController
-                                    * TODO: remember to update the state of the viewmodel to flip fab icon
-                                    * */
+                                    // TODO: ScanMenuAction.IDLE_TO_RECENT_SCANS hook up to navController
+
                                     when (menuAction.action) {
                                         ScanMenuAction.SUCCESS_CONTINUE_SCANNING -> {
                                             viewModel.startScanning()
-
                                         }
                                         ScanMenuAction.SUCCESS_DEPLOY_SHEET -> {
                                             viewModel.stopScanning()
