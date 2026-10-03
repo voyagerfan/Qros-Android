@@ -1,7 +1,6 @@
 package com.dev.qros.ui.screens
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -72,18 +72,15 @@ import com.dev.qros.model.QrCodeData
 import com.dev.qros.model.QrCodeSubGraph
 import com.dev.qros.model.QrosBarcode
 import com.dev.qros.model.QrosUiState
+import com.dev.qros.model.ScanMenuAction
 import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
 import com.dev.qros.model.getUrl
 import com.dev.qros.model.toVCardString
 import com.dev.qros.ui.BottomSheetScanCta
+import com.dev.qros.ui.components.CameraScreenFab
 import com.dev.qros.ui.screens.camera.camera.CameraScreen
 import kotlinx.coroutines.launch
-import androidx.core.net.toUri
-import com.dev.qros.model.ScanMenuAction
-import com.dev.qros.model.ScanMenuConfig
-import com.dev.qros.model.ScanState
-import com.dev.qros.ui.components.CameraScreenFab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
