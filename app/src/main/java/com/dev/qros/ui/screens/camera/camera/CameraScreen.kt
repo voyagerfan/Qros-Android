@@ -27,6 +27,30 @@ fun CameraScreen(
     fab: @Composable () -> Unit,
     onProcessImage: (ImageProxy) -> Unit,
 ) {
+
+    /** TODO: Test terminating imageProxy at the source. Keep defensive guard in viewmodel to divert imageProxy
+     * val lifecycleOwner = LocalLifecycleOwner.current
+     *
+     *     // Hold a mutable reference to the analyzer so we can clear/re-set it externally
+     *     var imageAnalyzerRef by remember { mutableStateOf<ImageAnalysis?>(null) }
+     *     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+     *
+     *     // React to state changes!
+     *     LaunchedEffect(scanState) {
+     *         if (scanState !is ScanState.Scanning) {
+     *             // Instantly stop ML Kit processing at the CameraX pipeline level
+     *             imageAnalyzerRef?.clearAnalyzer()
+     *             Log.d("CameraScreen", "Analyzer cleared - CameraX pipeline paused.")
+     *         } else {
+     *             // Re-enable the analyzer when we go back to scanning
+     *             imageAnalyzerRef?.setAnalyzer(cameraExecutor) { imageProxy ->
+     *                 onProcessImage(imageProxy)
+     *             }
+     *             Log.d("CameraScreen", "Analyzer active - streaming frames.")
+     *         }
+     *     }
+     */
+
     val lifecycleOwner = LocalLifecycleOwner.current
     Scaffold(
         modifier = modifier,
@@ -54,10 +78,12 @@ fun CameraScreen(
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
 
-                    /*
-                    * if (someCondition) {
-                    *   imageAnalyzer.clearAnalyzer()
-                    * }
+                    /* TODO: enable this and test after code at top is vetted
+                    * if (scanState is ScanState.Scanning) {
+                        imageAnalyzer.setAnalyzer(cameraExecutor) { imageProxy ->
+                            onProcessImage(imageProxy)
+                        }
+                    }
                     * */
 
                     imageAnalyzer.setAnalyzer(
