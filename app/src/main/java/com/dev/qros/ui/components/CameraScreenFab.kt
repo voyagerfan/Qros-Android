@@ -121,7 +121,7 @@ fun ToggleContent(
 
     if (checkedProgress > 0.5f) {
         Icon(
-            painter = rememberVectorPainter(Icons.Default.Close),
+            imageVector = Icons.Default.Close,
             contentDescription = "Toggle menu"
         )
     } else {
@@ -132,7 +132,7 @@ fun ToggleContent(
         ) {
             iconVector?.let { vector ->
                 Icon(
-                    painter = rememberVectorPainter(vector),
+                    imageVector = vector,
                     contentDescription = "Toggle menu"
                 )
             } ?: ContainedLoadingIndicator()
