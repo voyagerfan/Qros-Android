@@ -31,16 +31,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.dev.qros.model.QrosBarcode
 import com.dev.qros.model.ScanMenuAction
 import com.dev.qros.model.ScanMenuConfig
 import com.dev.qros.model.ScanState
@@ -50,11 +46,21 @@ import com.dev.qros.model.ScanState
 @Composable
 fun CameraScreenFab(
     scanState: ScanState,
-    onFabMenuSelected: (ScanMenuConfig) -> Unit
+    fabMenuExpanded: Boolean,
+    onCheckChanged: (Boolean) -> Unit,
+    onFabMenuSelected: (ScanMenuConfig) -> Unit,
 ) {
     //TODO: icons are not showing in on test device but are in emulator
+
+    val iconVector = remember(scanState) {
+        when (scanState) {
+            is ScanState.Scanning -> null
+            is ScanState.Ready -> Icons.Default.CropFree
+            is ScanState.Error -> Icons.Default.Warning
+            is ScanState.Success -> Icons.Default.CheckCircle
+        }
+    }
     MaterialExpressiveTheme {
-        var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -66,10 +72,23 @@ fun CameraScreenFab(
                 button = {
                     ToggleFloatingActionButton(
                         checked = fabMenuExpanded,
-                        onCheckedChange = { fabMenuExpanded = it },
+                        onCheckedChange = { onCheckChanged(it) },
                     ) {
+                        when (scanState) {
+                            is ScanState.Scanning -> {
+                                Log.d("scanState", "scanState is scanning")
+                            }
+                            is ScanState.Ready -> {
+                                Log.d("scanState", "scanState is ready")
+                            }
+                            is ScanState.Error -> {
+                                Log.d("scanState", "scanState is error")}
+                            is ScanState.Success -> {
+                                Log.d("scanState", "scanState is success")}
+                        }
+
                         ToggleContent(
-                            scanState = scanState,
+                            iconVector = iconVector,
                             checkedProgress = checkedProgress
                         )
                     }
@@ -79,7 +98,7 @@ fun CameraScreenFab(
                     .forEach { config ->
                         FloatingActionButtonMenuItem(
                             onClick = {
-                                fabMenuExpanded = false
+                                onCheckChanged(false)
                                 onFabMenuSelected(config)
                             },
                             icon = { Icon(config.icon, contentDescription = null) },
@@ -95,29 +114,9 @@ fun CameraScreenFab(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ToggleContent(
-    scanState: ScanState,
+    iconVector: ImageVector?,
     checkedProgress: Float,
 ) {
-
-    val iconVector = when (scanState) {
-        is ScanState.Scanning -> null
-        is ScanState.Ready -> Icons.Default.CropFree
-        is ScanState.Error -> Icons.Default.Warning
-        is ScanState.Success -> Icons.Default.CheckCircle
-    }
-
-    /*when (scanState) {
-        is ScanState.Scanning -> {
-            Log.d("scanState", "scanState is scanning")
-        }
-        is ScanState.Ready -> {
-            Log.d("scanState", "scanState is ready")
-        }
-        is ScanState.Error -> {
-            Log.d("scanState", "scanState is error")}
-        is ScanState.Success -> {
-            Log.d("scanState", "scanState is success")}
-    }*/
 
     if (checkedProgress > 0.5f) {
         Icon(
@@ -197,7 +196,7 @@ fun scanMenuContentData(
     }
 }
 
-
+/*
 @Preview
 @Composable
 fun PreviewCameraScreenFab() {
@@ -205,10 +204,10 @@ fun PreviewCameraScreenFab() {
     val emptyMockList: List<QrosBarcode> = emptyList()
     val throwable = Throwable()
     CameraScreenFab(
-        scanState = ScanState.Error(throwable),
+        cameraScreenState = CameraScreenState(scanState = ScanState.Error(throwable),
         onFabMenuSelected = {}
     )
-}
+}*/
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Preview

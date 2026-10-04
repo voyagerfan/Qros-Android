@@ -4,7 +4,8 @@ data class CameraScreenState(
     val isScanningEnabled: Boolean = true,
     val shouldShowBottomDialogCta: Boolean = false,
     val currentQrosBarcodeList: List<QrosBarcode>, // TODO: potentially remoted and use ScanState
-    val scanState: ScanState
+    val scanState: ScanState,
+    val fabMenuExpanded: Boolean = false
 )
 
 sealed interface ScanState {

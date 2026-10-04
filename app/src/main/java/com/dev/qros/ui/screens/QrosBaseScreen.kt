@@ -181,7 +181,11 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                         CameraScreen(
                             modifier = Modifier.padding(innerPadding),
                             fab = {
-                                CameraScreenFab(scanState = cameraScreenState.scanState) { menuAction ->
+                                CameraScreenFab(
+                                    scanState = cameraScreenState.scanState,
+                                    fabMenuExpanded = cameraScreenState.fabMenuExpanded,
+                                    onCheckChanged = { checked -> viewModel.updateFabMenuExpanded(checked)}
+                                ) { menuAction ->
                                     // TODO: ScanMenuAction.IDLE_TO_RECENT_SCANS hook up to navController
 
                                     when (menuAction.action) {

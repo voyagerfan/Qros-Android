@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -95,10 +96,22 @@ class QrosViewModel @Inject constructor(
             isScanningEnabled = true,
             shouldShowBottomDialogCta = false,
             currentQrosBarcodeList = emptyList(),
-            scanState = ScanState.Scanning
+            scanState = ScanState.Scanning,
+            fabMenuExpanded = false
         )
     )
-    val cameraScreenState = _cameraScreenState.asStateFlow()
+    val cameraScreenState: StateFlow<CameraScreenState> = _cameraScreenState
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = CameraScreenState(
+                isScanningEnabled = true,
+                shouldShowBottomDialogCta = false,
+                currentQrosBarcodeList = emptyList(),
+                scanState = ScanState.Scanning,
+                fabMenuExpanded = false
+            )
+        )
 
 
     /* ----------------- ViewModel Functions -------------------- */
@@ -134,7 +147,7 @@ class QrosViewModel @Inject constructor(
 
     @OptIn(ExperimentalGetImage::class)
     fun processImage(imageProxy: ImageProxy) {
-        when (_cameraScreenState.value.scanState) {
+        /*when (_cameraScreenState.value.scanState) {
             is ScanState.Scanning -> {
                 Log.d("scanState", "scanState is scanning")
             }
@@ -150,10 +163,9 @@ class QrosViewModel @Inject constructor(
             is ScanState.Success -> {
                 Log.d("scanState", "scanState is success")
             }
-        }
+        }*/
 
-
-        if (!_cameraScreenState.value.isScanningEnabled) {
+        if (_cameraScreenState.value.scanState !is ScanState.Scanning) {
             Log.d("QrosScanner", "isScanningEnabled is false, returning")
             imageProxy.close()
             return
@@ -265,6 +277,12 @@ class QrosViewModel @Inject constructor(
         _cameraScreenState.value = _cameraScreenState.value.copy(
             isScanningEnabled = true,
             scanState = ScanState.Error(error = e)
+        )
+    }
+
+    fun updateFabMenuExpanded(expanded: Boolean) {
+        _cameraScreenState.value = _cameraScreenState.value.copy(
+            fabMenuExpanded = expanded
         )
     }
 }

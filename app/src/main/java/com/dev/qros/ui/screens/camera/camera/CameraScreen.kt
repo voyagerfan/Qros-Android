@@ -54,6 +54,12 @@ fun CameraScreen(
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
 
+                    /*
+                    * if (someCondition) {
+                    *   imageAnalyzer.clearAnalyzer()
+                    * }
+                    * */
+
                     imageAnalyzer.setAnalyzer(
                         cameraExecutor
                     ) { imageProxy -> onProcessImage(imageProxy) }
