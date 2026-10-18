@@ -180,6 +180,7 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                     composable(CameraSubGraph.CAMERA_VIEW.name) {
                         CameraScreen(
                             modifier = Modifier.padding(innerPadding),
+                            scanState = cameraScreenState.scanState,
                             fab = {
                                 CameraScreenFab(
                                     scanState = cameraScreenState.scanState,

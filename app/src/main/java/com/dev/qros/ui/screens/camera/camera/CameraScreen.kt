@@ -13,10 +13,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.dev.qros.model.ScanState
 import java.util.concurrent.Executors
 
 
@@ -24,38 +30,33 @@ import java.util.concurrent.Executors
 @Composable
 fun CameraScreen(
     modifier: Modifier = Modifier,
+    scanState: ScanState,
     fab: @Composable () -> Unit,
     onProcessImage: (ImageProxy) -> Unit,
 ) {
-
-    /** TODO: Test terminating imageProxy at the source. Keep defensive guard in viewmodel to divert imageProxy
-     * val lifecycleOwner = LocalLifecycleOwner.current
-     *
-     *     // Hold a mutable reference to the analyzer so we can clear/re-set it externally
-     *     var imageAnalyzerRef by remember { mutableStateOf<ImageAnalysis?>(null) }
-     *     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
-     *
-     *     // React to state changes!
-     *     LaunchedEffect(scanState) {
-     *         if (scanState !is ScanState.Scanning) {
-     *             // Instantly stop ML Kit processing at the CameraX pipeline level
-     *             imageAnalyzerRef?.clearAnalyzer()
-     *             Log.d("CameraScreen", "Analyzer cleared - CameraX pipeline paused.")
-     *         } else {
-     *             // Re-enable the analyzer when we go back to scanning
-     *             imageAnalyzerRef?.setAnalyzer(cameraExecutor) { imageProxy ->
-     *                 onProcessImage(imageProxy)
-     *             }
-     *             Log.d("CameraScreen", "Analyzer active - streaming frames.")
-     *         }
-     *     }
-     */
-
     val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    var imageAnalyzerRef by remember { mutableStateOf<ImageAnalysis?>(null) }
+
     Scaffold(
         modifier = modifier,
         floatingActionButton = fab
     ) { innerPadding ->
+
+        LaunchedEffect(scanState, imageAnalyzerRef) {
+            if (scanState !is ScanState.Scanning) {
+                // Instantly stop ML Kit processing at the CameraX pipeline level
+                imageAnalyzerRef?.clearAnalyzer()
+
+                Log.d("CameraScreen", "Analyzer cleared - CameraX pipeline paused.")
+            } else {
+                imageAnalyzerRef?.setAnalyzer(cameraExecutor) { imageProxy ->
+                    onProcessImage(imageProxy)
+                }
+                Log.d("CameraScreen", "Analyzer active - streaming frames.")
+            }
+        }
+
         AndroidView(
             modifier = Modifier
                 .padding(innerPadding)
@@ -63,7 +64,6 @@ fun CameraScreen(
             factory = { ctx ->
                 val previewView = PreviewView(ctx)
                 val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                val cameraExecutor = Executors.newSingleThreadExecutor()
 
                 cameraProviderFuture.addListener({
                     val cameraProvider = cameraProviderFuture.get()
@@ -78,17 +78,7 @@ fun CameraScreen(
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
 
-                    /* TODO: enable this and test after code at top is vetted
-                    * if (scanState is ScanState.Scanning) {
-                        imageAnalyzer.setAnalyzer(cameraExecutor) { imageProxy ->
-                            onProcessImage(imageProxy)
-                        }
-                    }
-                    * */
-
-                    imageAnalyzer.setAnalyzer(
-                        cameraExecutor
-                    ) { imageProxy -> onProcessImage(imageProxy) }
+                    imageAnalyzerRef = imageAnalyzer
 
                     try {
                         cameraProvider.unbindAll()
