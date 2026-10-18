@@ -7,15 +7,12 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.room.util.copy
 import com.dev.qros.extensions.toContactInfo
 import com.dev.qros.extensions.toScan
 import com.dev.qros.model.CameraScreenState
-import com.dev.qros.model.ContactInfo
 import com.dev.qros.model.QrCodeData
 import com.dev.qros.model.QrosBarcode
 import com.dev.qros.model.QrosUiState
-import com.dev.qros.model.Scan
 import com.dev.qros.model.ScanState
 import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
@@ -34,7 +31,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -148,7 +144,6 @@ class QrosViewModel @Inject constructor(
     fun processImage(imageProxy: ImageProxy) {
 
         if (_cameraScreenState.value.scanState !is ScanState.Scanning) {
-            Log.d("QrosScanner", "isScanningEnabled is false, returning")
             imageProxy.close()
             return
         }
@@ -159,9 +154,7 @@ class QrosViewModel @Inject constructor(
 
             barcodeScanner.process(image)
                 .addOnSuccessListener { barcodes ->
-                    Log.d("onSuccess", "Scan success callback hit! Found ${barcodes.size} barcodes.")
                     if (barcodes.isNotEmpty()) {
-                        Log.d("barcodesFound!", "Scan success callback hit! Found ${barcodes.size} barcodes.")
                     }
                     barcodes.forEachIndexed { index, code ->
                         // convert barcode to scan object and insert into database

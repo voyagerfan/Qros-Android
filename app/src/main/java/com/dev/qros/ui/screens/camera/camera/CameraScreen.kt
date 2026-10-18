@@ -47,13 +47,10 @@ fun CameraScreen(
             if (scanState !is ScanState.Scanning) {
                 // Instantly stop ML Kit processing at the CameraX pipeline level
                 imageAnalyzerRef?.clearAnalyzer()
-
-                Log.d("CameraScreen", "Analyzer cleared - CameraX pipeline paused.")
             } else {
                 imageAnalyzerRef?.setAnalyzer(cameraExecutor) { imageProxy ->
                     onProcessImage(imageProxy)
                 }
-                Log.d("CameraScreen", "Analyzer active - streaming frames.")
             }
         }
 
