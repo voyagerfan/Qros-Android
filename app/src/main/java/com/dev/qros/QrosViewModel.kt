@@ -97,7 +97,6 @@ class QrosViewModel @Inject constructor(
             shouldShowBottomDialogCta = false,
             currentQrosBarcodeList = emptyList(),
             scanState = ScanState.Scanning,
-            fabMenuExpanded = false
         )
     )
     val cameraScreenState: StateFlow<CameraScreenState> = _cameraScreenState
@@ -277,12 +276,6 @@ class QrosViewModel @Inject constructor(
         _cameraScreenState.value = _cameraScreenState.value.copy(
             isScanningEnabled = true,
             scanState = ScanState.Error(error = e)
-        )
-    }
-
-    fun updateFabMenuExpanded(expanded: Boolean) {
-        _cameraScreenState.value = _cameraScreenState.value.copy(
-            fabMenuExpanded = expanded
         )
     }
 }

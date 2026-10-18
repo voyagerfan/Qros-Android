@@ -183,9 +183,7 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                             scanState = cameraScreenState.scanState,
                             fab = {
                                 CameraScreenFab(
-                                    scanState = cameraScreenState.scanState,
-                                    fabMenuExpanded = cameraScreenState.fabMenuExpanded,
-                                    onCheckChanged = { checked -> viewModel.updateFabMenuExpanded(checked)}
+                                    scanState = cameraScreenState.scanState
                                 ) { menuAction ->
                                     // TODO: ScanMenuAction.IDLE_TO_RECENT_SCANS hook up to navController
 

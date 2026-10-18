@@ -1,6 +1,8 @@
 package com.dev.qros.ui.components
 
-import android.util.Log
+import android.annotation.SuppressLint
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,29 +33,46 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dev.qros.model.ScanMenuAction
 import com.dev.qros.model.ScanMenuConfig
 import com.dev.qros.model.ScanState
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CameraScreenFab(
     scanState: ScanState,
-    fabMenuExpanded: Boolean,
-    onCheckChanged: (Boolean) -> Unit,
     onFabMenuSelected: (ScanMenuConfig) -> Unit,
 ) {
-    //TODO: icons are not showing in on test device but are in emulator
+    var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    var activeScanState by remember { mutableStateOf(scanState) }
 
-    val iconVector = remember(scanState) {
-        when (scanState) {
+    LaunchedEffect(fabMenuExpanded, scanState) {
+        if (fabMenuExpanded) {
+            activeScanState = scanState
+        } else {
+            // Wait for the exit/collapse animation to finish before updating state
+            delay(200.milliseconds)
+            activeScanState = scanState
+        }
+    }
+
+    val iconVector = remember(activeScanState) {
+        when (activeScanState) {
             is ScanState.Scanning -> null
             is ScanState.Ready -> Icons.Default.CropFree
             is ScanState.Error -> Icons.Default.Warning
@@ -72,21 +91,8 @@ fun CameraScreenFab(
                 button = {
                     ToggleFloatingActionButton(
                         checked = fabMenuExpanded,
-                        onCheckedChange = { onCheckChanged(it) },
+                        onCheckedChange = { fabMenuExpanded = it },
                     ) {
-                        when (scanState) {
-                            is ScanState.Scanning -> {
-                                Log.d("scanState", "scanState is scanning")
-                            }
-                            is ScanState.Ready -> {
-                                Log.d("scanState", "scanState is ready")
-                            }
-                            is ScanState.Error -> {
-                                Log.d("scanState", "scanState is error")}
-                            is ScanState.Success -> {
-                                Log.d("scanState", "scanState is success")}
-                        }
-
                         ToggleContent(
                             iconVector = iconVector,
                             checkedProgress = checkedProgress
@@ -94,11 +100,11 @@ fun CameraScreenFab(
                     }
                 }
             ) {
-                scanMenuContentData(scanState = scanState)
+                scanMenuContentData(scanState = activeScanState)
                     .forEach { config ->
                         FloatingActionButtonMenuItem(
                             onClick = {
-                                onCheckChanged(false)
+                                fabMenuExpanded = false
                                 onFabMenuSelected(config)
                             },
                             icon = { Icon(config.icon, contentDescription = null) },
@@ -111,6 +117,7 @@ fun CameraScreenFab(
     }
 }
 
+@SuppressLint("UnusedCrossfadeTargetStateParameter")
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ToggleContent(
