@@ -146,23 +146,6 @@ class QrosViewModel @Inject constructor(
 
     @OptIn(ExperimentalGetImage::class)
     fun processImage(imageProxy: ImageProxy) {
-        /*when (_cameraScreenState.value.scanState) {
-            is ScanState.Scanning -> {
-                Log.d("scanState", "scanState is scanning")
-            }
-
-            is ScanState.Ready -> {
-                Log.d("scanState", "scanState is ready")
-            }
-
-            is ScanState.Error -> {
-                Log.d("scanState", "scanState is error")
-            }
-
-            is ScanState.Success -> {
-                Log.d("scanState", "scanState is success")
-            }
-        }*/
 
         if (_cameraScreenState.value.scanState !is ScanState.Scanning) {
             Log.d("QrosScanner", "isScanningEnabled is false, returning")
