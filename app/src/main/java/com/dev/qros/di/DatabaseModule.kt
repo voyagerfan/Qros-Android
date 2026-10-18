@@ -3,6 +3,7 @@ package com.dev.qros.di
 import android.content.Context
 import androidx.room.Room
 import com.dev.qros.roomdb.AppDatabase
+import com.dev.qros.roomdb.ScanHistoryDao
 import com.dev.qros.roomdb.UrlDataDao
 import dagger.Module
 import dagger.Provides
@@ -28,5 +29,10 @@ object DatabaseModule {
     @Provides
     fun providesDaoObject(db: AppDatabase): UrlDataDao {
         return db.urlDataDao()
+    }
+
+    @Provides
+    fun providesScanHistoryDao(db: AppDatabase): ScanHistoryDao {
+        return db.scanHistoryDao()
     }
 }
