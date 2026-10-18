@@ -203,19 +203,6 @@ fun scanMenuContentData(
     }
 }
 
-/*
-@Preview
-@Composable
-fun PreviewCameraScreenFab() {
-
-    val emptyMockList: List<QrosBarcode> = emptyList()
-    val throwable = Throwable()
-    CameraScreenFab(
-        cameraScreenState = CameraScreenState(scanState = ScanState.Error(throwable),
-        onFabMenuSelected = {}
-    )
-}*/
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Preview
 @Composable
