@@ -36,3 +36,8 @@ enum class CameraSubGraph {
     CAMERA_VIEW,
     ACTIONS
 }
+
+enum class FileSubGraph {
+    SUMMARY_VIEW,
+    ACTIONS
+}

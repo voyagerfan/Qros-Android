@@ -66,6 +66,7 @@ import com.dev.qros.QrosViewModel
 import com.dev.qros.R
 import com.dev.qros.model.CameraSubGraph
 import com.dev.qros.model.ContactInfo
+import com.dev.qros.model.FileSubGraph
 import com.dev.qros.model.Form
 import com.dev.qros.model.Pages
 import com.dev.qros.model.QrCodeData
@@ -80,6 +81,7 @@ import com.dev.qros.model.toVCardString
 import com.dev.qros.ui.BottomSheetScanCta
 import com.dev.qros.ui.components.CameraScreenFab
 import com.dev.qros.ui.screens.camera.camera.CameraScreen
+import com.dev.qros.ui.screens.summaryscreen.SummaryScreen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,6 +89,7 @@ import kotlinx.coroutines.launch
 fun QrosMainScreen(viewModel: QrosViewModel) {
 
     val qrosUiState by viewModel.qrosUiState.collectAsStateWithLifecycle()
+    val scanSummaryState by viewModel.scanSummaryState.collectAsStateWithLifecycle()
     val cameraScreenState by viewModel.cameraScreenState.collectAsStateWithLifecycle()
     val vCardDataState by viewModel.vCardDataState.collectAsStateWithLifecycle()
     var showAddNewQrContent by rememberSaveable { mutableStateOf(false) }
@@ -207,6 +210,16 @@ fun QrosMainScreen(viewModel: QrosViewModel) {
                         ) { imageProxy ->
                             viewModel.processImage(imageProxy)
                         }
+                    }
+                }
+                navigation(FileSubGraph.SUMMARY_VIEW.name, route = Pages.FILE_GRAPH.route) {
+                    composable(FileSubGraph.SUMMARY_VIEW.name) {
+                        SummaryScreen(
+                            scanSummaryState = scanSummaryState,
+                            retryOnError = {
+                                // TODO: add a retry function to the view model
+                            }
+                        )
                     }
                 }
             }

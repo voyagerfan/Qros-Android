@@ -13,6 +13,7 @@ import com.dev.qros.model.CameraScreenState
 import com.dev.qros.model.QrCodeData
 import com.dev.qros.model.QrosBarcode
 import com.dev.qros.model.QrosUiState
+import com.dev.qros.model.Scan
 import com.dev.qros.model.ScanState
 import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
@@ -26,6 +27,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.Writer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -108,6 +110,22 @@ class QrosViewModel @Inject constructor(
             )
         )
 
+    val scanSummaryState: StateFlow<QrosUiState<List<Scan>>> = scanHistoryDao
+        .getAllScans()
+        .map { list ->
+            if (list.isEmpty()) QrosUiState.Empty
+            else {
+                val scanList = list.map { it }
+                QrosUiState.Success(data = scanList)
+            }
+        }
+        .flowOn(Dispatchers.Default)
+        .catch { e -> emit(QrosUiState.Error(e)) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = QrosUiState.Loading
+        )
 
     /* ----------------- ViewModel Functions -------------------- */
 

@@ -13,9 +13,6 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="previewCameraScreenFab">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="PreviewCameraScreenFab">
         <option name="selectionMode" value="DROPDOWN" />
         <DialogSelection />
@@ -25,6 +22,28 @@
         <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="PreviewSummaryScreenTopBar">
+        <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2026-10-25T17:51:13.298359Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/lamarpetty/.android/avd/Pixel_9a.avd" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
+      </SelectionState>
+      <SelectionState runConfigName="PreviewSummaryLoadingScreen">
+        <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2026-10-25T17:51:13.298359Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/lamarpetty/.android/avd/Pixel_9a.avd" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
+      </SelectionState>
+      <SelectionState runConfigName="PreviewSummaryEmptyScreen">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2026-10-25T17:51:13.298359Z">
           <Target type="DEFAULT_BOOT">
