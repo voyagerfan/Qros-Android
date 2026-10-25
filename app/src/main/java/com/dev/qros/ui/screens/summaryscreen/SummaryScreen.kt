@@ -57,6 +57,7 @@ fun SummaryScreen(
     scanSummaryState: QrosUiState<List<Scan>>,
     retryOnError: () -> Unit = {}
 ) {
+    //TODO: Consider "my scans, recent scans, favorites, all scans"
     Scaffold(
 
     ) {
@@ -65,6 +66,8 @@ fun SummaryScreen(
                 SummaryLoadingScreen()
             }
             is QrosUiState.Success -> {
+                // TODO: design iterable item then add to a list
+                // TODO: Consider adding a favorites feature to the list item
             }
             is QrosUiState.Empty -> {
                 SummaryEmptyScreen()
