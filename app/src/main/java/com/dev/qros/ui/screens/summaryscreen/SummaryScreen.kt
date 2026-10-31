@@ -2,23 +2,30 @@ package com.dev.qros.ui.screens.summaryscreen
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.CropFree
+import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
@@ -49,13 +56,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dev.qros.model.QrosUiState
 import com.dev.qros.model.Scan
+import com.dev.qros.model.ScanType
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SummaryScreen(
     scanSummaryState: QrosUiState<List<Scan>>,
-    retryOnError: () -> Unit = {}
+    retryOnError: () -> Unit = {},
+    onItemLongPress: () -> Unit = {}
 ) {
     //TODO: Consider "my scans, recent scans, favorites, all scans"
     Scaffold(
@@ -116,6 +125,118 @@ fun SummaryScreenTopBar() {
                     unfocusedBorderColor = Color.Transparent
                 )
             )
+        }
+    }
+}
+
+/**
+ * Creates the ScanItem Composable.
+ *
+ * Formats and displays a single scan item.
+ *
+ * @param Scan The Scan object from the "scans" DB.
+ * @param OnLongPress action to take when a scan Item is long pressed - trigger delete checkboxes.
+ * @param shouldShowCheckbox checkbox to mark for deletion. Show on long press
+ * @param onItemChecked action to take when a checkbox is checked. Provides the uid of the item and the checked state.
+ * @return The ScanItem Composable.
+ */
+@Composable
+fun ScanItem(
+    scan: Scan,
+    onLongPress: () -> Unit,
+    shouldShowCheckbox: Boolean = false,
+    onItemChecked: (Boolean, Int) -> Unit = { _, _ -> }
+){
+    var checked by rememberSaveable { mutableStateOf(false) }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = {},
+                onLongClick = {
+                    // disable the long press if the checkbox is showing
+                    if (!shouldShowCheckbox) {
+                        onLongPress()
+                        checked = !checked
+                        onItemChecked(true, scan.uid)
+                    }
+                }
+            )
+    ) {
+        if (shouldShowCheckbox) {
+            Checkbox(
+                checked = checked,
+                onCheckedChange = {
+                    checked = it
+                    onItemChecked(it, scan.uid)
+                },
+            )
+        }
+        IconForScanType(scan.type)
+
+        Spacer(modifier = Modifier.width(24.dp))
+
+        Column(
+            modifier = Modifier.wrapContentHeight()
+        ) {
+            Row {
+                Text(text = scanPrefix(scan.type))
+                Text(text = scan.payload ?: "")
+            }
+            Text(text = scan.getFormattedTimestamp())
+        }
+    }
+}
+
+@Composable
+fun IconForScanType(scanType: ScanType) {
+    return when (scanType) {
+        ScanType.URL -> {
+            Icon(
+                imageVector = Icons.Outlined.Link,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+        ScanType.CONTACT_INFO -> {
+            Icon(
+                imageVector = Icons.Outlined.Person,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+        ScanType.UNKNOWN -> {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+fun scanPrefix( scanType: ScanType): String {
+    return when (scanType) {
+        ScanType.URL -> "URL: "
+        ScanType.CONTACT_INFO -> "Contact: "
+        ScanType.UNKNOWN -> "Unknown"
+    }
+}
+
+fun onItemClickedHandler(scan: Scan) {
+    when (scan.type) {
+        ScanType.URL -> {
+            // open a browser
+        }
+        ScanType.CONTACT_INFO -> {
+            // Start the contact activity
+        }
+        ScanType.UNKNOWN -> {
+            // no action
         }
     }
 }
@@ -280,6 +401,26 @@ fun PreviewSummaryScreenError() {
 @Composable
 fun PreviewSummaryScreenTopBar() {
     SummaryScreenTopBar()
+}
+
+@Preview
+@Composable
+fun PreviewScanItemUrl() {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        ScanItem(
+            scan = Scan(
+                type = ScanType.URL,
+                payload = "https://google.com",
+                timestamp = System.currentTimeMillis()
+            ),
+            onLongPress = {},
+            shouldShowCheckbox = true
+        )
+    }
 }
 
 @Preview

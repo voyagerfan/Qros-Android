@@ -2,7 +2,6 @@ package com.dev.qros
 
 import android.graphics.Bitmap
 import android.util.Log
-import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import androidx.lifecycle.ViewModel
