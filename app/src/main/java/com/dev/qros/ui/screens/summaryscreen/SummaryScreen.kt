@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
@@ -57,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import com.dev.qros.model.QrosUiState
 import com.dev.qros.model.Scan
 import com.dev.qros.model.ScanType
+import com.dev.qros.model.SummaryScanItem
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -64,7 +67,7 @@ import com.dev.qros.model.ScanType
 fun SummaryScreen(
     scanSummaryState: QrosUiState<List<Scan>>,
     retryOnError: () -> Unit = {},
-    onItemLongPress: () -> Unit = {}
+    onItemClick: (SummaryScanItem) -> Unit = {}
 ) {
     //TODO: Consider "my scans, recent scans, favorites, all scans"
     Scaffold(
@@ -75,8 +78,12 @@ fun SummaryScreen(
                 SummaryLoadingScreen()
             }
             is QrosUiState.Success -> {
-                // TODO: design iterable item then add to a list
                 // TODO: Consider adding a favorites feature to the list item
+                val scanList = scanSummaryState.data
+                SummarySuccessScreen(
+                    scanList = scanList,
+                    onItemClick = { summaryScanItem -> onItemClick(summaryScanItem) }
+                )
             }
             is QrosUiState.Empty -> {
                 SummaryEmptyScreen()
@@ -129,23 +136,41 @@ fun SummaryScreenTopBar() {
     }
 }
 
+@Composable
+fun SummarySuccessScreen(
+    scanList: List<Scan>,
+    shouldShowCheckbox: Boolean = false,
+    onItemClick: (SummaryScanItem) -> Unit = {_ -> }
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        items(scanList, key = { scan -> scan.uid }) {
+            ScanItem(
+                scan = it,
+                shouldShowCheckbox = shouldShowCheckbox
+            ) { summaryScanItem -> onItemClick(summaryScanItem) }
+        }
+    }
+}
+
 /**
  * Creates the ScanItem Composable.
  *
  * Formats and displays a single scan item.
  *
- * @param Scan The Scan object from the "scans" DB.
- * @param OnLongPress action to take when a scan Item is long pressed - trigger delete checkboxes.
+ * @param scan The Scan object from the "scans" DB.
+ * @param onItemLongPress action to take when a scan Item is long pressed - trigger delete checkboxes.
  * @param shouldShowCheckbox checkbox to mark for deletion. Show on long press
  * @param onItemChecked action to take when a checkbox is checked. Provides the uid of the item and the checked state.
+ * @param onItemClicked action to take when an item is clicked.
  * @return The ScanItem Composable.
  */
 @Composable
 fun ScanItem(
     scan: Scan,
-    onLongPress: () -> Unit,
     shouldShowCheckbox: Boolean = false,
-    onItemChecked: (Boolean, Int) -> Unit = { _, _ -> }
+    onItemClicked: (SummaryScanItem) -> Unit = { _ -> }
 ){
     var checked by rememberSaveable { mutableStateOf(false) }
     Row(
@@ -153,13 +178,26 @@ fun ScanItem(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = {},
+                onClick = {
+                    onItemClicked(
+                        SummaryScanItem(
+                            scanInfo = scan,
+                            wasLongPressed = false,
+                            isChecked = if (shouldShowCheckbox) !checked else false
+                        )
+                    )
+                },
                 onLongClick = {
                     // disable the long press if the checkbox is showing
                     if (!shouldShowCheckbox) {
-                        onLongPress()
+                        onItemClicked(
+                            SummaryScanItem(
+                                scanInfo = scan,
+                                wasLongPressed = true,
+                                isChecked = true
+                            )
+                        )
                         checked = !checked
-                        onItemChecked(true, scan.uid)
                     }
                 }
             )
@@ -167,10 +205,7 @@ fun ScanItem(
         if (shouldShowCheckbox) {
             Checkbox(
                 checked = checked,
-                onCheckedChange = {
-                    checked = it
-                    onItemChecked(it, scan.uid)
-                },
+                onCheckedChange = { checked = it },
             )
         }
         IconForScanType(scan.type)
@@ -224,20 +259,6 @@ fun scanPrefix( scanType: ScanType): String {
         ScanType.URL -> "URL: "
         ScanType.CONTACT_INFO -> "Contact: "
         ScanType.UNKNOWN -> "Unknown"
-    }
-}
-
-fun onItemClickedHandler(scan: Scan) {
-    when (scan.type) {
-        ScanType.URL -> {
-            // open a browser
-        }
-        ScanType.CONTACT_INFO -> {
-            // Start the contact activity
-        }
-        ScanType.UNKNOWN -> {
-            // no action
-        }
     }
 }
 
@@ -417,8 +438,8 @@ fun PreviewScanItemUrl() {
                 payload = "https://google.com",
                 timestamp = System.currentTimeMillis()
             ),
-            onLongPress = {},
-            shouldShowCheckbox = true
+            onItemClicked = {_ -> },
+            shouldShowCheckbox = false
         )
     }
 }

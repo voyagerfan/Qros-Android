@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dev.qros.extensions.toContactInfo
@@ -14,6 +15,7 @@ import com.dev.qros.model.QrosBarcode
 import com.dev.qros.model.QrosUiState
 import com.dev.qros.model.Scan
 import com.dev.qros.model.ScanState
+import com.dev.qros.model.SummaryScanItem
 import com.dev.qros.model.UrlData
 import com.dev.qros.model.VCardData
 import com.dev.qros.model.mapToQrCodeData
@@ -109,6 +111,22 @@ class QrosViewModel @Inject constructor(
             )
         )
 
+    private val _isCheckListActive = MutableStateFlow(false)
+    val isCheckListActive: StateFlow<Boolean> = _isCheckListActive.asStateFlow()
+    private val _checkedItems = MutableStateFlow<Set<String>>(emptySet())
+    val checkedItems: StateFlow<Set<String>> = _checkedItems.asStateFlow()
+
+    /*
+    TODO: create a data class called SummaryScreenState that holds the following:
+     - isCheckListActive
+     - checkedItems
+     - List of scans (from the database)
+    TODO: Wire up a combine call in scanSummaryState. Type Should be QrosUiState<SummaryScreenState>>
+     - should include: scanHistoryDao, _checkedItems, _isCheckListActive
+     - success -> data = SummaryScreenState(add all current params)
+     - error -> data = error
+     - loading -> loading
+     */
     val scanSummaryState: StateFlow<QrosUiState<List<Scan>>> = scanHistoryDao
         .getAllScans()
         .map { list ->
